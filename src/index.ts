@@ -53,13 +53,10 @@ bot.onText(/\/rewind (.+)/, async (msg, match) => {
         content,
       },
     });
-    bot.sendMessage(chatId, "Some rewinds has been made 🗂️");
+    await bot.sendMessage(chatId, "Some rewinds has been made 🗂️");
   } else {
-    bot.sendMessage(chatId, "Invalid argument");
+    await bot.sendMessage(chatId, "Ehh.. what? 🙆‍");
   }
-
-  // send back the matched "whatever" to the chat
-  // bot.sendMessage(chatId, resp);
 });
 
 bot.on("message", async (msg) => {

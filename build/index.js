@@ -74,9 +74,8 @@ bot.onText(/\/rewind (.+)/, function (msg, match) { return __awaiter(void 0, voi
                 argument = match === null || match === void 0 ? void 0 : match[1].split(" ")[0];
                 if (!(!isNaN(Number(argument)) &&
                     Number(argument) <= cacheProxy.length &&
-                    Number(argument) <= 50)) return [3 /*break*/, 2];
+                    Number(argument) <= 50)) return [3 /*break*/, 3];
                 messageRange = cacheProxy.slice(0, argument).reverse();
-                console.log(messageRange);
                 authorsArray = new Set(messageRange.map(function (message) { return message.author; }));
                 authors = Array.from(authorsArray);
                 content = JSON.stringify(messageRange);
@@ -88,12 +87,15 @@ bot.onText(/\/rewind (.+)/, function (msg, match) { return __awaiter(void 0, voi
                     })];
             case 1:
                 _a.sent();
-                bot.sendMessage(chatId, "Some rewinds has been made 🗂️");
-                return [3 /*break*/, 3];
+                return [4 /*yield*/, bot.sendMessage(chatId, "Some rewinds has been made 🗂️")];
             case 2:
-                bot.sendMessage(chatId, "Invalid argument");
-                _a.label = 3;
-            case 3: return [2 /*return*/];
+                _a.sent();
+                return [3 /*break*/, 5];
+            case 3: return [4 /*yield*/, bot.sendMessage(chatId, "Invalid argument")];
+            case 4:
+                _a.sent();
+                _a.label = 5;
+            case 5: return [2 /*return*/];
         }
     });
 }); });
@@ -101,7 +103,6 @@ bot.on("message", function (msg) { return __awaiter(void 0, void 0, void 0, func
     return __generator(this, function (_a) {
         if (!msg.entities)
             cacheProxy.unshift(normalizeMessage(msg));
-        console.log(cacheProxy);
         return [2 /*return*/];
     });
 }); });

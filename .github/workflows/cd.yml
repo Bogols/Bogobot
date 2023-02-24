@@ -19,7 +19,5 @@ jobs:
           script: |
             cd /root/Bogobot
             git pull origin master
-            git status
-            npm install --only=prod
+            npm ci
             npm run build
-            npm run start

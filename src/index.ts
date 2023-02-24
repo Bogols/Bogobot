@@ -52,8 +52,13 @@ bot.onText(/\/rewind (.+)/, async (msg, match) => {
         authors,
         content,
       },
+    }).then((result) => {
+      bot.sendMessage(chatId, "Some rewinds has been made 🗂️");
+      console.log(result);
+    }).catch((error) => {
+      bot.sendMessage(chatId, "Something is not yes 🤔");
+      console.error(error);
     });
-    await bot.sendMessage(chatId, "Some rewinds has been made 🗂️");
   } else {
     await bot.sendMessage(chatId, "Ehh.. what? 🙆‍");
   }

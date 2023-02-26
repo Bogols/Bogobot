@@ -18,6 +18,8 @@ jobs:
           port: 22
           script: |
             cd /root/Bogobot
+            pm2 stop all
             git pull origin master
             npm ci
             npm run build
+            pm2 start npm -- start

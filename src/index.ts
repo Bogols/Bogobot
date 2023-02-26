@@ -1,4 +1,4 @@
-import TelegramBot, { Message } from "node-telegram-bot-api";
+import TelegramBot from "node-telegram-bot-api";
 import { PrismaClient } from "@prisma/client";
 import { CronJob } from "cron";
 
@@ -8,64 +8,65 @@ const bot = new TelegramBot(token, { polling: true });
 
 const prisma = new PrismaClient();
 
-const messageCache: { [key: string]: string | undefined }[] = [];
-
-const arrayChangeHandler = {
-  get: function (target: any, property: any) {
-    if (target.length > 50) target.pop();
-
-    return target[property];
-  },
-  set: function (target: any, property: any, value: any, receiver: any) {
-    target[property] = value;
-    return true;
-  },
-};
-
-const cacheProxy = new Proxy(messageCache, arrayChangeHandler);
-function normalizeMessage(message: Message) {
-  return {
-    author: message.from?.username ?? message.from?.first_name,
-    messageContent: message.text,
-  };
-}
-
 bot.onText(/\/rewind (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const argument = match?.[1].split(" ")[0];
+  const allMessages = await prisma.message.findMany().then((result) => result);
 
-  if (
-    !isNaN(Number(argument)) &&
-    Number(argument) <= cacheProxy.length &&
-    Number(argument) <= 50
-  ) {
-    const messageRange = cacheProxy.slice(0, argument).reverse();
+  if (isNaN(Number(argument))) {
+    await bot.sendMessage(chatId, "Something is not yes 🤔 - argument");
+    return;
+  }
 
-    const authorsArray = new Set(
-      messageRange.map((message: any) => message.author)
-    );
-    const authors = Array.from(authorsArray) as string[];
-    const content = JSON.stringify(messageRange);
-
-    await prisma.rewind.create({
-      data: {
-        authors,
-        content,
-      },
-    }).then((result) => {
-      bot.sendMessage(chatId, "Some rewinds has been made 🗂️");
-      console.log(result);
-    }).catch((error) => {
-      bot.sendMessage(chatId, "Something is not yes 🤔");
-      console.error(error);
-    });
-  } else {
-    await bot.sendMessage(chatId, "Ehh.. what? 🙆‍");
+  if (Number(argument) <= allMessages.length && Number(argument) <= 50) {
+    const newRewind = allMessages.reverse().slice(0, Number(argument));
+    const rewindAuthors = new Set(newRewind.map((rewind) => rewind.author));
+    const authors = Array.from(rewindAuthors);
+    await prisma.rewind
+      .create({
+        data: {
+          authors,
+          messages: {
+            connect: newRewind.map((message) => ({ id: message.id })),
+          },
+        },
+      })
+      .then((result) => {
+        bot.sendMessage(chatId, "Some rewinds has been made 🗂️");
+        console.log(result);
+      })
+      .catch((error) => {
+        bot.sendMessage(chatId, "Something is not yes 🤔 - create rewind");
+        console.error(error);
+      });
   }
 });
 
 bot.on("message", async (msg) => {
-  if (!msg.entities) cacheProxy.unshift(normalizeMessage(msg));
+  if (msg.text?.startsWith("/rewind")) return;
+
+  if (msg.text && msg.chat.title && msg.from)
+    await prisma.message.create({
+      data: {
+        author: msg.from?.username ?? msg.from?.first_name,
+        content: msg.text,
+        chatName: msg.chat.title,
+        createdAt: new Date().toISOString(),
+      },
+    });
+
+  prisma.message.count().then((messageCount) => {
+    if (messageCount > 50) {
+      prisma.message.findMany().then(async (returnedMessages) => {
+        returnedMessages.sort((a, b) => Number(a.id) - Number(b.id));
+        await prisma.message.delete({
+          where: {
+            id: returnedMessages[0].id,
+          },
+        });
+      });
+    }
+  });
 });
 
 const wakeUpFn = () => {

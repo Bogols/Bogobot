@@ -11,7 +11,17 @@ datasource db {
 }
 
 model Rewind {
-  id      Int    @id @default(autoincrement())
-  authors String[]
-  content String
+  id       Int       @id @default(autoincrement())
+  authors  String[]
+  messages Message[]
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  author    String
+  content   String
+  chatName  String
+  createdAt DateTime
+  rewind    Rewind?  @relation(fields: [rewindId], references: [id])
+  rewindId  Int?
 }

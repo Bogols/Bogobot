@@ -26,18 +26,15 @@ bot.onText(/\/rewind (.+)/, async (msg, match) => {
       .create({
         data: {
           authors,
-          messages: {
-            connect: newRewind.map((message) => ({ id: message.id })),
-          },
+          messages: newRewind.map((message) => JSON.stringify(message)),
         },
       })
-      .then((result) => {
+      .then(() => {
         bot.sendMessage(chatId, "Some rewinds has been made 🗂️");
-        console.log(result);
       })
       .catch((error) => {
         bot.sendMessage(chatId, "Something is not yes 🤔 - create rewind");
-        console.error(error);
+        bot.sendMessage(chatId, error);
       });
   }
 });

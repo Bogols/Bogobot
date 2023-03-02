@@ -13,7 +13,7 @@ datasource db {
 model Rewind {
   id       Int       @id @default(autoincrement())
   authors  String[]
-  messages Message[]
+  messages String[]
 }
 
 model Message {
@@ -22,6 +22,4 @@ model Message {
   content   String
   chatName  String
   createdAt DateTime
-  rewind    Rewind?  @relation(fields: [rewindId], references: [id])
-  rewindId  Int?
 }

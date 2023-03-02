@@ -18,8 +18,7 @@ jobs:
           port: 22
           script: |
             cd /root/Bogobot
-            pm2 stop all
+            docker compose down
             git pull origin master
-            npm ci
-            npm run build
-            pm2 start npm -- start
+            docker compose build --no-cache
+            docker compose up -d

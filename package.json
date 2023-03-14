@@ -33,6 +33,7 @@
   "dependencies": {
     "@prisma/client": "4.10.1",
     "cron": "2.2.0",
+    "node-cache": "5.1.2",
     "node-telegram-bot-api": "0.61.0"
   }
 }

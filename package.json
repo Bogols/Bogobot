@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "npx nodemon",
+    "prisma:migrate": "dotenv -e .env.production -- npx prisma migrate deploy",
+    "dev": "NODE_ENV=development npx nodemon",
     "build": "rimraf ./build && tsc",
-    "start": "node ./build/index.js",
+    "start": "NODE_ENV=production node ./build/index.js",
     "lint": "eslint . --ext .ts"
   },
   "keywords": [],
@@ -22,6 +23,7 @@
     "@types/prettier": "2.7.2",
     "@typescript-eslint/eslint-plugin": "5.52.0",
     "@typescript-eslint/parser": "5.52.0",
+    "dotenv-cli": "^7.1.0",
     "eslint": "8.34.0",
     "nodemon": "2.0.20",
     "prettier": "2.8.4",
@@ -33,7 +35,9 @@
   "dependencies": {
     "@prisma/client": "4.10.1",
     "cron": "2.2.0",
+    "dotenv": "^16.0.3",
     "node-cache": "5.1.2",
-    "node-telegram-bot-api": "0.61.0"
+    "node-telegram-bot-api": "0.61.0",
+    "socket.io": "^4.6.1"
   }
 }

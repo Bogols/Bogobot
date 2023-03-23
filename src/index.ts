@@ -1,16 +1,33 @@
-import TelegramBot, { Message } from "node-telegram-bot-api";
 import { PrismaClient } from "@prisma/client";
 import { CronJob } from "cron";
+import * as dotenv from "dotenv";
+import { createServer } from "http";
 import NodeCache from "node-cache";
+import TelegramBot, { Message } from "node-telegram-bot-api";
+import { Server } from "socket.io";
+
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const token = process.env.TELEGRAM_TOKEN as string;
 
-const bot = new TelegramBot(token, { polling: true });
+const httpServer = createServer();
 
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*",
+  },
+});
+
+httpServer.listen(2137);
+
+const bot = new TelegramBot(token, { polling: true });
 const prisma = new PrismaClient();
 const messageCache = new NodeCache();
+
 const messages: Message[] = [];
 const messageCacheKey = "messageCache";
+
+io.on("connection", (socket) => socket.emit("hello", "world"));
 
 function checkMessagePreCacheLength<T>(cache: T[]): Promise<number> {
   return new Promise((resolve, reject) => {

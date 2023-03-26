@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prisma:migrate": "dotenv -e .env.production -- npx prisma migrate deploy",
+    "deploy:prod": "dotenv -e .env.production -- npx prisma migrate deploy",
+    "push:dev": "dotenv -e .env.development -- npx prisma db push",
+    "migrate": "dotenv -e .env.production -- npx prisma migrate dev",
+    "db:format": "dotenv -e .env.development -- npx prisma format",
+    "generate:dev": "dotenv -e .env.development -- npx prisma generate",
+    "generate:prod": "dotenv -e .env.production -- npx prisma generate",
     "dev": "NODE_ENV=development npx nodemon",
     "build": "rimraf ./build && tsc",
     "start": "NODE_ENV=production node ./build/index.js",
@@ -17,6 +22,7 @@
   "devDependencies": {
     "@types/cron": "2.0.0",
     "@types/eslint": "8.21.1",
+    "@types/lodash.isempty": "^4.4.7",
     "@types/node": "18.14.0",
     "@types/node-telegram-bot-api": "0.61.2",
     "@types/nodemon": "1.19.2",
@@ -35,7 +41,9 @@
   "dependencies": {
     "@prisma/client": "4.10.1",
     "cron": "2.2.0",
+    "cryptr": "^6.2.0",
     "dotenv": "^16.0.3",
+    "lodash.isempty": "^4.4.0",
     "node-cache": "5.1.2",
     "node-telegram-bot-api": "0.61.0",
     "socket.io": "^4.6.1"

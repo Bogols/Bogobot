@@ -12,16 +12,6 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const token = process.env.TELEGRAM_TOKEN as string;
 
-const httpServer = createServer();
-
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-  },
-});
-
-httpServer.listen(2137);
-
 const bot = new TelegramBot(token, { polling: true });
 const prisma = new PrismaClient();
 const bogolCache = new NodeCache();
@@ -50,38 +40,6 @@ function addMessage(data: Message) {
     }
   });
 }
-
-io.on("connection", (socket) => {
-  socket.on("loginUsername", async (arg) => {
-    await prisma.user
-      .findUnique({
-        where: {
-          username: arg,
-        },
-        select: { id: true },
-      })
-      .then((result) => {
-        if (isEmpty(result)) {
-          socket.emit("response", {
-            message: "error",
-            error: `There is no user ${arg}`,
-          });
-        }
-        if (!isEmpty(result) && "id" in result) {
-          const confirmationString = cryptr.encrypt(`${arg}-${result.id}`);
-          bot
-            .sendMessage(
-              result.id,
-              `https://make-rewind-great-again.netlify.app/confirm/${confirmationString}`
-            )
-            .then(() => socket.emit("response", "Login link has been sent"))
-            .catch((error) =>
-              socket.emit("response", { message: "error", error })
-            );
-        }
-      });
-  });
-});
 
 bot.onText(/\/rewind (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
@@ -136,17 +94,6 @@ bot.onText(/\/rewind (.+)/, async (msg, match) => {
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
-  if (msg && msg.from) {
-    await prisma.user.upsert({
-      where: { id: msg.from.id },
-      update: {},
-      create: {
-        id: msg.from.id,
-        username: msg.from.username ?? msg.from.first_name,
-      },
-    });
-  }
-
   if (msg.text?.startsWith("/rewind")) return;
 
   await addMessage(msg);
@@ -178,3 +125,5 @@ const wakeUpJob = new CronJob(
 );
 
 wakeUpJob.start();
+
+

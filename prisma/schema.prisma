@@ -20,8 +20,3 @@ model Message {
   chatName  String
   createdAt DateTime @default(dbgenerated("now()"))
 }
-
-model User {
-  id       Int    @id
-  username String @unique
-}

@@ -1,12 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import axios from "axios";
 import { CronJob } from "cron";
-import Cryptr from "cryptr";
 import * as dotenv from "dotenv";
-import { createServer } from "http";
-import isEmpty from "lodash.isempty";
 import NodeCache from "node-cache";
 import TelegramBot, { Message } from "node-telegram-bot-api";
-import { Server } from "socket.io";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -15,7 +12,6 @@ const token = process.env.TELEGRAM_TOKEN as string;
 const bot = new TelegramBot(token, { polling: true });
 const prisma = new PrismaClient();
 const bogolCache = new NodeCache();
-const cryptr = new Cryptr(process.env.SECRET_KEY as string);
 
 const messages: Message[] = [];
 const messageCacheKey = "messageCache";
@@ -92,8 +88,12 @@ bot.onText(/\/rewind (.+)/, async (msg, match) => {
   }
 });
 
+let globalID: number;
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
+  if (chatId) globalID = chatId;
+
   if (msg.text?.startsWith("/rewind")) return;
 
   await addMessage(msg);
@@ -111,6 +111,41 @@ bot.on("message", async (msg) => {
   bogolCache.set(messageCacheKey, messages, 86400);
 });
 
+async function fetchResumeInformation() {
+  const prompt = "podaj ciekawostkę na temat Jana Pawła II";
+
+  const data = {
+    model: "gpt-3.5-turbo",
+    messages: [{ role: "user", content: prompt }],
+    max_tokens: 2048,
+  };
+
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+  };
+
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      data,
+      { headers: headers }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+const aiResponse = fetchResumeInformation().then(
+  (response) => response.choices[0].message.content
+);
+
+const getAiResponse = async () => {
+  const response = await aiResponse;
+  bot.sendMessage(globalID, response);
+};
+
 const wakeUpFn = () => {
   prisma.rewind.count();
   console.log("The database has been aroused");
@@ -123,7 +158,13 @@ const wakeUpJob = new CronJob(
   false,
   "Europe/London"
 );
+const popeJob = new CronJob(
+  "37 20 * * *",
+  getAiResponse,
+  null,
+  false,
+  "Europe/London"
+);
 
 wakeUpJob.start();
-
-
+popeJob.start();

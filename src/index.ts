@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import axios from "axios";
 import { CronJob } from "cron";
 import * as dotenv from "dotenv";
 import NodeCache from "node-cache";
@@ -47,6 +46,8 @@ bot.onText(/\/rewind (.+)/, async (msg, match) => {
     return;
   }
 
+  console.log(allMessages);
+
   if (!allMessages) {
     await bot.sendMessage(chatId, "Message cache is empty");
     return;
@@ -65,10 +66,13 @@ bot.onText(/\/rewind (.+)/, async (msg, match) => {
           chatId: message.chat.id,
         };
       });
+
     const rewindAuthors = new Set(
       messagesToRewind.map((message) => message.author ?? "Unknown author")
     );
+
     const authors = Array.from(rewindAuthors);
+
     await prisma.rewind
       .create({
         data: {
@@ -88,11 +92,8 @@ bot.onText(/\/rewind (.+)/, async (msg, match) => {
   }
 });
 
-let globalID: number;
-
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
-  if (chatId) globalID = chatId;
 
   if (msg.text?.startsWith("/rewind")) return;
 
@@ -111,44 +112,8 @@ bot.on("message", async (msg) => {
   bogolCache.set(messageCacheKey, messages, 86400);
 });
 
-async function fetchResumeInformation() {
-  const prompt = "podaj ciekawostkę na temat Jana Pawła II";
-
-  const data = {
-    model: "gpt-3.5-turbo",
-    messages: [{ role: "user", content: prompt }],
-    max_tokens: 2048,
-  };
-
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-  };
-
-  try {
-    const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      data,
-      { headers: headers }
-    );
-    return response.data;
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-const aiResponse = fetchResumeInformation().then(
-  (response) => response.choices[0].message.content
-);
-
-const getAiResponse = async () => {
-  const response = await aiResponse;
-  bot.sendMessage(globalID, response);
-};
-
 const wakeUpFn = () => {
   prisma.rewind.count();
-  console.log("The database has been aroused");
 };
 
 const wakeUpJob = new CronJob(
@@ -158,13 +123,5 @@ const wakeUpJob = new CronJob(
   false,
   "Europe/London"
 );
-const popeJob = new CronJob(
-  "37 20 * * *",
-  getAiResponse,
-  null,
-  false,
-  "Europe/London"
-);
 
 wakeUpJob.start();
-popeJob.start();
